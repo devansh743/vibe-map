@@ -39,16 +39,13 @@ app.get('/api/vibes', async (req, res) => {
 
 // --- NEW SECTION FOR DEPLOYMENT ---
 // 4. Serve the Frontend (Angular)
-// This tells Node where the 'ng build' files are located
-// This points to the folder created by 'ng build'
-const distPath = path.join(__dirname, '../client/dist/client/browser/index.html');
+// This tells the server WHERE the folder of built files is
+app.use(express.static(path.join(__dirname, '../client/dist/client/browser')));
 
-app.use(express.static(distPath));
+// This tells the server WHICH file to show when a user visits the site
 app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  res.sendFile(path.join(__dirname, '../client/dist/client/browser/index.html'));
 });
-// ----------------------------------
-
 // 5. Socket Logic
 io.on('connection', (socket) => {
   console.log('✨ New Explorer Connected');
