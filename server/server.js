@@ -40,7 +40,6 @@ app.get('/api/vibes', async (req, res) => {
 // --- NEW SECTION FOR DEPLOYMENT ---
 // 4. Serve the Frontend (Angular)
 // This tells Node where the 'ng build' files are located
-const path = require('path');
 // This points to the folder created by 'ng build'
 const distPath = path.join(__dirname, '../client/dist/client/browser');
 
