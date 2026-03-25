@@ -1,0 +1,25 @@
+<div class="main-container">
+  <div class="sidebar">
+    <h1>VibeMap</h1>
+    <p class="explorer-name">Explorer: <strong>{{ explorerName }}</strong></p>
+    <button class="total-vibes">Total Vibes: {{ vibes.length }}</button>
+    
+    <div class="live-vibes-header">
+      <span class="live-dot"></span> <span class="live-text">LIVE VIBES</span>
+    </div>
+
+    <div class="vibe-list-container">
+      <div *ngIf="vibes.length === 0" class="empty-state">
+        <p>No vibes yet.</p>
+        <p>Right-click the map to drop</p>
+        <p>the first one!</p>
+      </div>
+
+      <div *ngFor="let vibe of vibes" class="vibe-item">
+        <p><strong>{{ vibe.user }}:</strong> {{ vibe.message }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
