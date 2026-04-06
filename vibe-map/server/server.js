@@ -23,8 +23,13 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error("❌ DB Error:", err));
 
 // --- Static File Serving ---
-// This path matches the structure seen in your Render logs
-const distPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
+// Update: Checking both possible Angular output paths
+let distPath = path.join(__dirname, '..', 'client', 'dist', 'client');
+
+// Fallback to /browser if the standard path doesn't exist (depends on Angular version)
+if (!fs.existsSync(distPath)) {
+  distPath = path.join(distPath, 'browser');
+}
 
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
