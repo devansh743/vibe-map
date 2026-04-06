@@ -13,17 +13,18 @@ export interface Vibe {
 
 @Injectable({ providedIn: 'root' })
 export class VibeService {
-  // Use your live Render URL
-  private readonly baseUrl = 'https://vibe-map.onrender.com';
+  // Use the current website URL for both API and Sockets
+  private readonly baseUrl = window.location.origin.includes('localhost')
+    ? 'http://localhost:3000'
+    : 'https://vibe-map.onrender.com';
+
   private readonly apiUrl = `${this.baseUrl}/api/vibes`;
   private socket: Socket;
 
-  // This Subject holds the "Source of Truth" for your data
   private vibesSubject = new BehaviorSubject<Vibe[]>([]);
   public vibes$ = this.vibesSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Connect to the WebSocket server
     this.socket = io(this.baseUrl);
     this.initSocket();
   }
@@ -35,10 +36,9 @@ export class VibeService {
   }
 
   private initSocket() {
-    // Listen for the broadcast from the server
     this.socket.on('vibe-appeared', (newVibe: Vibe) => {
+      // This is the part that updates the 'other slide'
       const currentVibes = this.vibesSubject.value;
-      // Add the new vibe to the top of the list
       this.vibesSubject.next([newVibe, ...currentVibes]);
     });
 
