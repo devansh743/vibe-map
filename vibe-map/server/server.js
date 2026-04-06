@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path'); // ✅ ADD THIS LINE: Critical for finding your Angular files
+const path = require('path');
+const fs = require('fs'); // ✅ ADDED: Required to use fs.existsSync
 
 const app = express();
 const server = http.createServer(app);
@@ -21,17 +22,20 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Atlas Connected"))
   .catch(err => console.error("❌ DB Error:", err));
 
-// --- Static File Serving (Fixes the "Not Found" error) ---
-// This tells Node to go up one level and find the client folder
+// --- Static File Serving ---
+// This path matches the structure seen in your Render logs
 const distPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
 
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
 
+  // Handles Angular's client-side routing
   app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
+  console.log("✅ Static files serving from:", distPath);
 } else {
+  // If this logs, check your Render Build Command
   console.error("❌ ERROR: distPath does not exist:", distPath);
 }
 
@@ -68,7 +72,8 @@ app.delete('/api/vibes/:id', async (req, res) => {
   } catch (err) { res.status(500).json(err); }
 });
 
-const PORT = process.env.PORT || 3000; // ✅ Render uses dynamic ports; this is required
+// --- Start Server ---
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
