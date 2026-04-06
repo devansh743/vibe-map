@@ -4,12 +4,18 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs'); // ✅ ADDED: Required to use fs.existsSync
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
+
+// ✅ IMPROVED: Specific CORS for Render and Local
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: ["https://vibe-map.onrender.com", "http://localhost:4200"],
+    methods: ["GET", "POST"]
+  },
+  transports: ['polling', 'websocket'] // Force polling support for Render
 });
 
 app.use(cors());
@@ -22,28 +28,6 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Atlas Connected"))
   .catch(err => console.error("❌ DB Error:", err));
 
-// --- Static File Serving ---
-// Update: Checking both possible Angular output paths
-let distPath = path.join(__dirname, '..', 'client', 'dist', 'client');
-
-// Fallback to /browser if the standard path doesn't exist (depends on Angular version)
-if (!fs.existsSync(distPath)) {
-  distPath = path.join(distPath, 'browser');
-}
-
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-
-  // Handles Angular's client-side routing
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-  console.log("✅ Static files serving from:", distPath);
-} else {
-  // If this logs, check your Render Build Command
-  console.error("❌ ERROR: distPath does not exist:", distPath);
-}
-
 // --- Vibe Schema ---
 const VibeSchema = new mongoose.Schema({
   user: { type: String, default: 'devansh' },
@@ -53,7 +37,7 @@ const VibeSchema = new mongoose.Schema({
 });
 const Vibe = mongoose.model('Vibe', VibeSchema);
 
-// --- API Routes ---
+// --- API Routes (MUST COME BEFORE STATIC FILES) ---
 app.get('/api/vibes', async (req, res) => {
   try {
     const vibes = await Vibe.find().sort({ createdAt: -1 });
@@ -64,7 +48,8 @@ app.get('/api/vibes', async (req, res) => {
 app.post('/api/vibes', async (req, res) => {
   try {
     const savedVibe = await new Vibe(req.body).save();
-    io.emit('vibe-appeared', savedVibe);
+    console.log("📡 Emitting vibe-appeared:", savedVibe.message);
+    io.emit('vibe-appeared', savedVibe); // THIS IS THE BROADCAST
     res.json(savedVibe);
   } catch (err) { res.status(500).json(err); }
 });
@@ -76,6 +61,23 @@ app.delete('/api/vibes/:id', async (req, res) => {
     res.json({ success: true });
   } catch (err) { res.status(500).json(err); }
 });
+
+// --- Static File Serving (MOVED TO BOTTOM) ---
+let distPath = path.join(__dirname, '..', 'client', 'dist', 'client');
+if (!fs.existsSync(distPath)) {
+  distPath = path.join(distPath, 'browser');
+}
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // Handles Angular's client-side routing ONLY if API routes don't match
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
+  });
+  console.log("✅ Static files serving from:", distPath);
+}
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;

@@ -13,8 +13,8 @@ export interface Vibe {
 
 @Injectable({ providedIn: 'root' })
 export class VibeService {
-  // Use the current website URL for both API and Sockets
-  private readonly baseUrl = window.location.origin.includes('localhost')
+  // Use the RELATIVE path for Render, or localhost for your PC
+  private readonly baseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:3000'
     : 'https://vibe-map.onrender.com';
 
@@ -25,7 +25,10 @@ export class VibeService {
   public vibes$ = this.vibesSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.socket = io(this.baseUrl);
+    // FORCE POLLING: This is the fix for many deployment sync issues
+    this.socket = io(this.baseUrl, {
+      transports: ['polling', 'websocket']
+    });
     this.initSocket();
   }
 
@@ -36,8 +39,10 @@ export class VibeService {
   }
 
   private initSocket() {
+    this.socket.on('connect', () => console.log('✅ Connected to Real-time Server'));
+
     this.socket.on('vibe-appeared', (newVibe: Vibe) => {
-      // This is the part that updates the 'other slide'
+      console.log('✨ New Vibe received via Socket:', newVibe);
       const currentVibes = this.vibesSubject.value;
       this.vibesSubject.next([newVibe, ...currentVibes]);
     });
