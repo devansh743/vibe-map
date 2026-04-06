@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface Vibe {
@@ -13,29 +13,35 @@ export interface Vibe {
 
 @Injectable({ providedIn: 'root' })
 export class VibeService {
-  // If we are on Render, use empty string (relative path). If local, use localhost:3000
-  private isProd = window.location.hostname !== 'localhost';
-  private baseUrl = this.isProd ? '' : 'http://localhost:3000';
+  // Use your live Render URL
+  private readonly baseUrl = 'https://vibe-map.onrender.com';
+  private readonly apiUrl = `${this.baseUrl}/api/vibes`;
+  private socket: Socket;
 
-  private apiUrl = `${this.baseUrl}/api/vibes`;
-  private socket = io(this.baseUrl || window.location.origin);
-
-  // BehaviorSubject stores the current list and broadcasts it to the component
+  // This Subject holds the "Source of Truth" for your data
   private vibesSubject = new BehaviorSubject<Vibe[]>([]);
   public vibes$ = this.vibesSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    // Connect to the WebSocket server
+    this.socket = io(this.baseUrl);
     this.initSocket();
   }
 
   fetchVibes() {
-    this.http.get<Vibe[]>(this.apiUrl).subscribe((v: Vibe[]) => this.vibesSubject.next(v));
+    this.http.get<Vibe[]>(this.apiUrl).subscribe((v: Vibe[]) => {
+      this.vibesSubject.next(v);
+    });
   }
 
   private initSocket() {
-    this.socket.on('vibe-appeared', (v: Vibe) => {
-      this.vibesSubject.next([v, ...this.vibesSubject.value]);
+    // Listen for the broadcast from the server
+    this.socket.on('vibe-appeared', (newVibe: Vibe) => {
+      const currentVibes = this.vibesSubject.value;
+      // Add the new vibe to the top of the list
+      this.vibesSubject.next([newVibe, ...currentVibes]);
     });
+
     this.socket.on('vibe-deleted', (id: string) => {
       const filtered = this.vibesSubject.value.filter(v => v._id !== id);
       this.vibesSubject.next(filtered);
