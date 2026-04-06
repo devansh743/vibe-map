@@ -22,13 +22,18 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error("❌ DB Error:", err));
 
 // --- Static File Serving (Fixes the "Not Found" error) ---
-const distPath = path.join(__dirname, '../client/dist/client/browser');
-app.use(express.static(distPath));
+// This tells Node to go up one level and find the client folder
+const distPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
 
-app.get('*', (req, res) => {
-  const indexPath = path.join(distPath, 'index.html');
-  res.sendFile(indexPath);
-});
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  console.error("❌ ERROR: distPath does not exist:", distPath);
+}
 
 // --- Vibe Schema ---
 const VibeSchema = new mongoose.Schema({
