@@ -9,15 +9,19 @@
     </div>
 
     <div class="vibe-list-container">
-      <div *ngIf="vibes.length === 0" class="empty-state">
-        <p>No vibes yet.</p>
-        <p>Right-click the map to drop</p>
-        <p>the first one!</p>
-      </div>
+      @if (vibes.length === 0) {
+        <div class="empty-state">
+          <p>No vibes yet.</p>
+          <p>Right-click the map to drop</p>
+          <p>the first one!</p>
+        </div>
+      }
 
-      <div *ngFor="let vibe of vibes" class="vibe-item">
-        <p><strong>{{ vibe.user }}:</strong> {{ vibe.message }}</p>
-      </div>
+      @for (vibe of vibes; track vibe._id) {
+        <div class="vibe-item">
+          <p><strong>{{ vibe.user }}:</strong> {{ vibe.message }}</p>
+        </div>
+      }
     </div>
   </div>
 

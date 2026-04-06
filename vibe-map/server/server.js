@@ -3,112 +3,67 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-require('dotenv').config();
+const path = require('path'); // ✅ ADD THIS LINE: Critical for finding your Angular files
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { 
-  cors: { 
-    origin: process.env.CORS_ORIGIN || "*",
-    methods: ["GET", "POST"]
-  } 
+const io = new Server(server, {
+  cors: { origin: "*" }
 });
 
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://langaliyadevansh68_db_user:vzZSNvQQFJGXyKMb@cluster0.ygnsiov.mongodb.net/vibemap?retryWrites=true&w=majority&appName=Cluster0';
+// --- Database Connection ---
+const MONGO_URI = "mongodb://langaliyadevansh68_db_user:vzZSNvQQFJGXyKMb@ac-gcbigtu-shard-00-00.ygnsiov.mongodb.net:27017,ac-gcbigtu-shard-00-01.ygnsiov.mongodb.net:27017,ac-gcbigtu-shard-00-02.ygnsiov.mongodb.net:27017/vibemap?ssl=true&replicaSet=atlas-jzezrn-shard-0&authSource=admin&retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB!"))
-  .catch(err => console.error("❌ MongoDB Connection Error: ", err));
+  .then(() => console.log("✅ MongoDB Atlas Connected"))
+  .catch(err => console.error("❌ DB Error:", err));
 
-// Vibe Schema
-const VibeSchema = new mongoose.Schema({
-  user: { type: String, default: 'Anonymous' },
-  message: { type: String, required: true },
-  coords: { type: [Number], required: true },
-  type: { type: String, default: 'chill' },
-  createdAt: { type: Date, default: Date.now }
+// --- Static File Serving (Fixes the "Not Found" error) ---
+const distPath = path.join(__dirname, '../client/dist/client/browser');
+app.use(express.static(distPath));
+
+app.get('*', (req, res) => {
+  const indexPath = path.join(distPath, 'index.html');
+  res.sendFile(indexPath);
 });
 
+// --- Vibe Schema ---
+const VibeSchema = new mongoose.Schema({
+  user: { type: String, default: 'devansh' },
+  message: { type: String, required: true },
+  coords: { type: [Number], required: true }, // [lat, lng]
+  createdAt: { type: Date, default: Date.now }
+});
 const Vibe = mongoose.model('Vibe', VibeSchema);
 
-// API Routes
+// --- API Routes ---
 app.get('/api/vibes', async (req, res) => {
   try {
-    const vibes = await Vibe.find().sort({ createdAt: -1 }).limit(100);
+    const vibes = await Vibe.find().sort({ createdAt: -1 });
     res.json(vibes);
-  } catch (err) {
-    console.error('Error fetching vibes:', err);
-    res.status(500).json({ error: 'Failed to fetch vibes' });
-  }
+  } catch (err) { res.status(500).json(err); }
 });
 
 app.post('/api/vibes', async (req, res) => {
   try {
-    const newVibe = new Vibe(req.body);
-    const savedVibe = await newVibe.save();
+    const savedVibe = await new Vibe(req.body).save();
     io.emit('vibe-appeared', savedVibe);
     res.json(savedVibe);
-  } catch (err) {
-    console.error('Error saving vibe:', err);
-    res.status(500).json({ error: 'Failed to save vibe' });
-  }
+  } catch (err) { res.status(500).json(err); }
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime(), node: process.version });
+app.delete('/api/vibes/:id', async (req, res) => {
+  try {
+    await Vibe.findByIdAndDelete(req.params.id);
+    io.emit('vibe-deleted', req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json(err); }
 });
 
-// Serve Static Frontend
-// CHANGE THIS LINE:
-const distPath = path.join(__dirname, '../client/dist/client/browser');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('/', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
-  // SPA Fallback for client-side routing, but keep API routes intact
-  app.get(/^((?!\/api).)*$/, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} else {
-  console.warn('⚠️ Disallowing static serve: dist path not found. Build the client with npm run build first.');
-}
-
-// WebSocket Logic
-io.on('connection', (socket) => {
-  console.log('✨ New Explorer Connected');
-
-  socket.on('drop-vibe', async (data) => {
-    try {
-      const newVibe = new Vibe(data);
-      const savedVibe = await newVibe.save();
-      console.log("✅ Vibe saved to Database!");
-      io.emit('vibe-appeared', savedVibe);
-    } catch (err) {
-      console.error("❌ Save Error:", err);
-      socket.emit('error', 'Failed to save vibe');
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('👋 Explorer Disconnected');
-  });
-});
-
-// Express error handler
-app.use((err, req, res, next) => {
-  console.error('Express error:', err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
-});
-
-// Start Server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // ✅ Render uses dynamic ports; this is required
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on Port ${PORT}`);
-  console.log(`📍 Frontend: http://localhost:${PORT}`);
-  console.log(`🔌 WebSocket: ON`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -1,39 +1,39 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { NgIf, NgFor } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { VibeService, Vibe } from './vibe.service';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NgIf, NgFor],
-  templateUrl: '../app.component.html',
-  styleUrls: ['./app.css']
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit, AfterViewInit {
-  vibes: any[] = [];
-  explorerName: string = '';
-  private apiUrl = 'http://localhost:3000/api/vibes';
-  private map: L.Map | undefined;
+export class AppComponent implements OnInit {
+  map!: L.Map;
+  vibes: Vibe[] = [];
+  explorerName: string = 'devansh';
+  markers: { [key: string]: L.Marker } = {};
 
-  constructor(private http: HttpClient) { }
+  constructor(private vibeService: VibeService) { }
 
   ngOnInit() {
-    const name = window.prompt('Enter your name:');
-    this.explorerName = name ? name : 'Anonymous';
-
-    this.loadVibes();
-  }
-
-  ngAfterViewInit() {
     this.initMap();
+
+    // FIXED: Added Vibe[] type to fix the terminal error
+    this.vibeService.vibes$.subscribe((data: Vibe[]) => {
+      this.vibes = data;
+      this.updateMarkers(data);
+    });
+
+    this.vibeService.fetchVibes();
   }
 
-  private initMap(): void {
+  initMap() {
+    // Fix for missing Leaflet marker icons in Angular
     const iconDefault = L.icon({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconRetinaUrl: 'assets/marker-icon-2x.png',
+      iconUrl: 'assets/marker-icon.png',
+      shadowUrl: 'assets/marker-shadow.png',
       iconSize: [25, 41],
       iconAnchor: [12, 41],
       popupAnchor: [1, -34],
@@ -42,57 +42,44 @@ export class AppComponent implements OnInit, AfterViewInit {
     });
     L.Marker.prototype.options.icon = iconDefault;
 
-    this.map = L.map('map').setView([20.5937, 78.9629], 5);
+    this.map = L.map('map').setView([22.3072, 73.1812], 13);
+    // ... rest of your code
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
-
-    this.map.on('contextmenu', (e: L.LeafletMouseEvent) => {
-      this.onMapRightClick(e.latlng);
+    this.map.on('contextmenu', (e: any) => {
+      const msg = prompt("What's the vibe here?");
+      if (msg) {
+        this.vibeService.addVibe({
+          user: this.explorerName,
+          message: msg,
+          coords: [e.latlng.lat, e.latlng.lng]
+        }).subscribe();
+      }
     });
   }
-
-  loadVibes() {
-    this.http.get<any[]>(this.apiUrl).subscribe({
-      next: (data) => {
-        this.vibes = data;
-        this.renderVibes();
-      },
-      error: (err) => console.error('❌ Could not load vibes:', err)
+  updateMarkers(vibeList: Vibe[]) {
+    // 1. Remove markers no longer in list
+    Object.keys(this.markers).forEach(id => {
+      if (!vibeList.find(v => v._id === id)) {
+        this.map.removeLayer(this.markers[id]);
+        delete this.markers[id];
+      }
     });
-  }
 
-  private renderVibes() {
-    if (!this.map || !this.vibes) return;
-
-    this.vibes.forEach(vibe => {
-      if (vibe.coords && vibe.coords.length === 2) {
-        L.marker([vibe.coords[0], vibe.coords[1]])
-          .bindPopup(`<b>${vibe.user}</b><br>${vibe.message}`)
-          .addTo(this.map!);
+    // 2. Add new markers
+    vibeList.forEach(v => {
+      if (v._id && !this.markers[v._id]) {
+        const marker = L.marker([v.coords[0], v.coords[1]])
+          .addTo(this.map)
+          .bindPopup(`<b>${v.user}</b>: ${v.message}`);
+        this.markers[v._id] = marker;
       }
     });
   }
 
-  onMapRightClick(latlng: L.LatLng) {
-    const message = window.prompt('Drop a vibe here:');
-    if (!message) return;
-
-    const newVibe = {
-      user: this.explorerName,
-      message: message,
-      coords: [latlng.lat, latlng.lng]
-    };
-
-    this.http.post(this.apiUrl, newVibe).subscribe({
-      next: (savedVibe: any) => {
-        this.vibes.push(savedVibe);
-        L.marker([latlng.lat, latlng.lng])
-          .bindPopup(`<b>${this.explorerName}</b><br>${message}`)
-          .addTo(this.map!);
-      },
-      error: (err) => alert('Failed to save vibe!')
-    });
+  onDelete(id: string | undefined) {
+    if (id && confirm("Delete this vibe?")) {
+      this.vibeService.deleteVibe(id).subscribe();
+    }
   }
 }

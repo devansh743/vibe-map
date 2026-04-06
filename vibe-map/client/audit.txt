@@ -1,0 +1,122 @@
+﻿# npm audit report
+
+@tootallnate/once  <3.0.1
+@tootallnate/once vulnerable to Incorrect Control Flow Scoping - https://github.com/advisories/GHSA-vpq2-c234-7xj6
+fix available via `npm audit fix --force`
+Will install @angular/cli@21.2.6, which is a breaking change
+node_modules/@tootallnate/once
+  http-proxy-agent  4.0.1 - 5.0.0
+  Depends on vulnerable versions of @tootallnate/once
+  node_modules/http-proxy-agent
+    make-fetch-happen  7.1.1 - 14.0.0
+    Depends on vulnerable versions of cacache
+    Depends on vulnerable versions of http-proxy-agent
+    node_modules/@sigstore/sign/node_modules/make-fetch-happen
+    node_modules/make-fetch-happen
+    node_modules/npm-registry-fetch/node_modules/make-fetch-happen
+    node_modules/sigstore/node_modules/make-fetch-happen
+    node_modules/tuf-js/node_modules/make-fetch-happen
+      @sigstore/sign  1.0.0
+      Depends on vulnerable versions of make-fetch-happen
+      node_modules/@sigstore/sign
+        sigstore  0.0.1-alpha.1 - 1.9.0
+        Depends on vulnerable versions of @sigstore/sign
+        Depends on vulnerable versions of @sigstore/tuf
+        Depends on vulnerable versions of make-fetch-happen
+        node_modules/sigstore
+          pacote  5.0.0 - 19.0.1 || 20.0.0 || 21.0.0
+          Depends on vulnerable versions of @npmcli/run-script
+          Depends on vulnerable versions of cacache
+          Depends on vulnerable versions of npm-registry-fetch
+          Depends on vulnerable versions of sigstore
+          Depends on vulnerable versions of tar
+          node_modules/pacote
+            @angular/cli  <=1.4.0-rc.2 || 6.2.9 - 20.3.17 || 21.0.0-next.0 - 21.1.4 || 21.2.0-next.0 - 21.2.0-rc.2
+            Depends on vulnerable versions of @angular-devkit/architect
+            Depends on vulnerable versions of @angular-devkit/core
+            Depends on vulnerable versions of @angular-devkit/schematics
+            Depends on vulnerable versions of @schematics/angular
+            Depends on vulnerable versions of inquirer
+            Depends on vulnerable versions of pacote
+            node_modules/@angular/cli
+      node-gyp  <=10.3.1
+      Depends on vulnerable versions of make-fetch-happen
+      Depends on vulnerable versions of tar
+      node_modules/node-gyp
+        @npmcli/run-script  1.1.1 - 9.0.1
+        Depends on vulnerable versions of node-gyp
+        node_modules/@npmcli/run-script
+      npm-registry-fetch  7.0.1 - 14.0.5
+      Depends on vulnerable versions of make-fetch-happen
+      node_modules/npm-registry-fetch
+      tuf-js  <=1.1.7
+      Depends on vulnerable versions of make-fetch-happen
+      node_modules/tuf-js
+        @sigstore/tuf  <=1.0.3
+        Depends on vulnerable versions of tuf-js
+        node_modules/@sigstore/tuf
+
+ajv  7.0.0-alpha.0 - 8.17.1
+Severity: moderate
+ajv has ReDoS when using `$data` option - https://github.com/advisories/GHSA-2g4f-4pwh-qvx6
+fix available via `npm audit fix --force`
+Will install @angular/cli@21.2.6, which is a breaking change
+node_modules/ajv
+  @angular-devkit/core  12.0.0-next.0 - 19.2.21 || 20.0.0-next.0 - 20.3.17 || 21.0.0-next.0 - 21.1.4 || 21.2.0-next.0 - 21.2.0-rc.2
+  Depends on vulnerable versions of ajv
+  Depends on vulnerable versions of picomatch
+  node_modules/@angular-devkit/core
+    @angular-devkit/architect  0.1000.0-next.0 - 0.1000.0-rc.1 || 0.1200.0-next.0 - 0.1902.21 || 0.2000.0-next.0 - 0.2003.17 || 0.2100.0-next.0 - 0.2101.4 || 0.2102.0-next.0 - 0.2102.0-rc.2
+    Depends on vulnerable versions of @angular-devkit/core
+    node_modules/@angular/cli/node_modules/@angular-devkit/architect
+    @angular-devkit/schematics  12.0.0-next.0 - 19.2.21 || 20.0.0-next.0 - 20.3.17 || 21.0.0-next.0 - 21.1.4 || 21.2.0-next.0 - 21.2.0-rc.2
+    Depends on vulnerable versions of @angular-devkit/core
+    node_modules/@angular-devkit/schematics
+    @schematics/angular  12.0.0-next.0 - 19.2.21 || 20.0.0-next.0 - 20.3.17 || 21.0.0-next.0 - 21.1.4 || 21.2.0-next.0 - 21.2.0-rc.2
+    Depends on vulnerable versions of @angular-devkit/core
+    Depends on vulnerable versions of @angular-devkit/schematics
+    node_modules/@schematics/angular
+
+picomatch  <=2.3.1
+Severity: high
+Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching - https://github.com/advisories/GHSA-3v7f-55p6-f55p
+Picomatch has a ReDoS vulnerability via extglob quantifiers - https://github.com/advisories/GHSA-c2c7-rcm5-vvqj
+fix available via `npm audit fix --force`
+Will install @angular/cli@21.2.6, which is a breaking change
+node_modules/picomatch
+
+tar  <=7.5.10
+Severity: high
+node-tar Vulnerable to Arbitrary File Creation/Overwrite via Hardlink Path Traversal - https://github.com/advisories/GHSA-34x7-hfp2-rc4v
+node-tar is Vulnerable to Arbitrary File Overwrite and Symlink Poisoning via Insufficient Path Sanitization - https://github.com/advisories/GHSA-8qq5-rm4j-mr97
+Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction - https://github.com/advisories/GHSA-83g3-92jg-28cx
+tar has Hardlink Path Traversal via Drive-Relative Linkpath - https://github.com/advisories/GHSA-qffp-2rhf-9h96
+node-tar Symlink Path Traversal via Drive-Relative Linkpath - https://github.com/advisories/GHSA-9ppj-qmqm-q256
+Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS - https://github.com/advisories/GHSA-r6q2-hw4h-h46w
+fix available via `npm audit fix --force`
+Will install @angular/cli@21.2.6, which is a breaking change
+node_modules/tar
+  cacache  14.0.0 - 18.0.4
+  Depends on vulnerable versions of tar
+  node_modules/cacache
+  node_modules/make-fetch-happen/node_modules/cacache
+
+tmp  <=0.2.3
+tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter - https://github.com/advisories/GHSA-52f5-9888-hmc6
+fix available via `npm audit fix --force`
+Will install @angular/cli@21.2.6, which is a breaking change
+node_modules/tmp
+  external-editor  >=1.1.1
+  Depends on vulnerable versions of tmp
+  node_modules/external-editor
+    inquirer  3.0.0 - 8.2.6 || 9.0.0 - 9.3.7
+    Depends on vulnerable versions of external-editor
+    node_modules/inquirer
+
+23 vulnerabilities (10 low, 5 moderate, 8 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

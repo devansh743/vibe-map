@@ -93,3 +93,17 @@
   flex-grow: 1;
   background-color: #e5e3df; /* Placeholder map background */
 }
+.vibe-list-container {
+  overflow-y: auto;
+  max-height: 70vh;
+}
+.vibe-item {
+  border-bottom: 1px solid #333;
+  padding: 10px 0;
+  position: relative;
+}
+.delete-btn {
+  color: #ff4d4d;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
